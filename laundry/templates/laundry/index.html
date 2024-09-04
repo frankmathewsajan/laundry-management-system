@@ -2,9 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laundry Management System - Registration</title>
 </head>
-<body>
-Hello World
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+    <h1 style="color: #4CAF50;">Laundry Management System</h1>
+    <h2 style="color: #009688;">Enter Your Registration Number</h2>
+
+    <form id="regnForm" style="background-color: #fff; padding: 20px; border-radius: 10px; width: 300px;">
+        <label for="regnNo" style="color: #333;">Registration Number:</label><br>
+        <input type="text" id="regnNo" placeholder="Enter Registration Number" required style="width: 100%; padding: 8px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc;"><br>
+
+        <button type="button" onclick="submitRegn()" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+            Submit
+        </button>
+    </form>
+
+    <script>
+        function submitRegn() {
+            const regnNo = document.getElementById('regnNo').value.trim();
+            if (regnNo === '') {
+                alert('Please enter your registration number.');
+                return;
+            }
+            // Redirect to the student's laundry page with the registration number as a query parameter
+            window.location.href = `student_laundry.html?regnNo=${regnNo}`;
+        }
+    </script>
 </body>
 </html>
