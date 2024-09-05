@@ -22,18 +22,20 @@
         </button>
     </form>
 
-    <table class="table table-bordered table-hover mt-4">
+    <table class="table table-bordered table-hover mt-4" id="laundryTable">
         <thead>
         <tr>
             <th>Sl. No</th>
             <th>Reg Number</th>
             <th>Date</th>
-            <th>Status (In/Out)</th>
+            <th>Status (Out?)</th>
+            <th>Count</th>
+            <th>Delete</th>
         </tr>
         </thead>
         <tbody>
         {% for laundry in laundries %}
-            <tr>
+            <tr data-reg-number="{{ laundry.reg_number }}">
                 <td>{{ forloop.counter }}</td>
                 <td>{{ laundry.reg_number }}</td>
                 <td>{{ laundry.date }}</td>
@@ -46,24 +48,42 @@
                             aria-label=""
                     />
                 </td>
+                <td>
+                    {{ laundry.clothCount }}
+                </td>
+                <td>
+                    <form method="POST" action="{% url 'delete' laundry.id %}" id="deleteForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+
+                </td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
     <script>
-        // Function to handle the checkbox toggle event
+        const deleteForm = document.getElementById('deleteForm');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function (event) {
+                if (!confirm("Are you sure you want to delete this item?")) {
+                    event.preventDefault(); // Prevent form submission
+                }
+            });
+        }
+
+        // Check if there are any checkboxes with the class 'status-toggle'
         document.querySelectorAll('.status-toggle').forEach(function (checkbox) {
             checkbox.addEventListener('change', function () {
                 const laundryId = this.getAttribute('data-id');
                 const status = this.checked ? 'out' : 'in';
 
-                // AJAX request to toggle the status
-                fetch(`/toggle/${laundryId}/`, {
+                fetch(`/toggle/${laundryId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}', // Include CSRF token for security
+                        'X-CSRFToken': '{{ csrf_token }}',
                     },
                     body: JSON.stringify({
                         'status': status
@@ -75,7 +95,6 @@
                             alert(`Laundry status updated to ${status.toUpperCase()}`);
                         } else {
                             alert('Failed to update the status.');
-                            // Revert checkbox state in case of error
                             this.checked = !this.checked;
                         }
                     })
@@ -85,15 +104,36 @@
                     });
             });
         });
-    </script>
 
-    <script>
-        document.getElementById('regForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-            const regNumber = document.getElementById('reg_number').value;
-            this.action = '/info/' + regNumber;
-            this.submit();
+        // Check if rows exist in the table before adding event listeners
+        document.querySelectorAll('#laundryTable tbody tr').forEach(function (row) {
+            row.addEventListener('click', function () {
+                document.getElementById('reg_number').value = this.getAttribute('data-reg-number');
+            });
         });
+
+
+        const regForm = document.getElementById('regForm');
+        if (regForm) {
+            regForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const regNumber = document.getElementById('reg_number').value;
+
+                // Regex pattern to match any 2 digits, any 3 letters, and 4 or 5 digits
+                const regNumberPattern = /^\d{2}[a-zA-Z]{3}\d{4,5}$/;
+
+                if (!regNumberPattern.test(regNumber)) {
+                    alert("Invalid registration number. Please enter a valid format.");
+                    return;
+                }
+
+                this.action = '/info/' + regNumber;
+                this.submit();
+            });
+        }
+
+
     </script>
 
 </div>

@@ -56,12 +56,14 @@
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ laundry.date }}</td>
                 <td>{{ laundry.clothCount }}</td>
-                <td>{% if laundry.out %} <i class="fa fa-check"></i> {% else %} <i class="fa fa-xmark"></i>{% endif %}</td>
+                <td>{% if laundry.out %} <i class="fa fa-check"></i> {% else %} <i class="fa fa-xmark"></i>{% endif %}
+                </td>
                 <td>
-                    <form method="POST" action="{% url 'delete' laundry.id %}">
+                    <form method="POST" action="{% url 'delete' laundry.id %}" id="deleteForm">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                     </form>
+
                 </td>
             </tr>
         {% endfor %}
@@ -72,6 +74,17 @@
 </div>
 
 </body>
+<script>
+    const deleteForm = document.getElementById('deleteForm');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function (event) {
+                if (!confirm("Are you sure you want to delete this item?")) {
+                    event.preventDefault(); // Prevent form submission
+                }
+            });
+        }
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>

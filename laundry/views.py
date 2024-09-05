@@ -1,15 +1,15 @@
+import json
+import re
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, JsonResponse
-from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.db.models import Count
+from django.utils import timezone
 
-import json
-from datetime import timedelta
-from .__init__ import _md5, MAX_SUBMISSIONS, MAX_CLOTH_COUNT
+from .__init__ import _md5, MAX_CLOTH_COUNT
 from .models import Laundry
 
 
@@ -47,7 +47,7 @@ def index(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse("login"))
 
-    return render(request, "laundry/index.html",{
+    return render(request, "laundry/index.html", {
         'laundries': Laundry.objects.filter(user=request.user)
     })
 
@@ -68,7 +68,36 @@ def delete(request, id):
         reg = laundry.reg_number
         laundry.delete()
         messages.error(request, f"Deleted laundry {id}.")
-        return redirect('info', reg)
+
+        # Get the referring page URL
+        referer_url = request.META.get('HTTP_REFERER', None)
+
+        # Check if the referer was from the 'info' page
+        if referer_url and f'/info/{reg}' in referer_url:
+            return redirect('info', reg)
+        else:
+            # Otherwise, redirect to 'index'
+            return redirect('index')
+
+
+def toggle(request, id):
+    try:
+        laundry = Laundry.objects.get(id=id)
+        data = json.loads(request.body)
+        status = data.get('status', None)
+
+        if status:
+            laundry.out = True if status == 'out' else False
+            laundry.save()
+
+            return JsonResponse({'success': True, 'status': status})
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid status.'}, status=400)
+
+    except Laundry.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Laundry not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 def add(request, reg_number):
@@ -77,12 +106,12 @@ def add(request, reg_number):
         reg_number = reg_number.upper()
 
         # Validate cloth count
-        if not count or count > MAX_CLOTH_COUNT:
+        if count is None or count < 0 or count > MAX_CLOTH_COUNT:
             messages.error(request, f"Invalid cloth count. Maximum cloth count is {MAX_CLOTH_COUNT}.")
             return redirect('info', reg_number)
 
         # Validate registration number
-        if reg_number == '' or len(reg_number) > 9:
+        if not re.match(r'^\d{2}[a-zA-Z]{3}\d{4,5}$', reg_number):
             messages.error(request, "Invalid registration number.")
             return redirect('info', reg_number)
 
